@@ -4,23 +4,36 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-// --- Firebase Admin (singleton) ---------------------------------------------
-import { getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
+// ---- Firebase Admin (singleton) --------------------------------------------
+import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getStorage } from 'firebase-admin/storage';
 
-// Expect FIREBASE_STORAGE_BUCKET like: sleepingai-5abd2.firebasestorage.app
+// ✅ MUST be like: sleepingai-5abd2.appspot.com  (NOT firebasestorage.app)
 const BUCKET = process.env.FIREBASE_STORAGE_BUCKET;
+// Paste the full service-account JSON into this env var (as one line)
+const SERVICE_JSON = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+
+if (!BUCKET) {
+  throw new Error(
+    'Missing env: FIREBASE_STORAGE_BUCKET (e.g. sleepingai-5abd2.appspot.com)'
+  );
+}
+if (!SERVICE_JSON) {
+  throw new Error(
+    'Missing env: FIREBASE_SERVICE_ACCOUNT_KEY (service account JSON string)'
+  );
+}
 
 if (!getApps().length) {
   initializeApp({
-    credential: applicationDefault(),   // uses GOOGLE_APPLICATION_CREDENTIALS
+    credential: cert(JSON.parse(SERVICE_JSON)),
     storageBucket: BUCKET,
   });
 }
 
-const bucket = getStorage().bucket(BUCKET);
+const bucket = getStorage().bucket(); // uses default from initializeApp()
 
-// --- OpenAI ------------------------------------------------------------------
+// ---- OpenAI ----------------------------------------------------------------
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Create MP3 from text
@@ -35,7 +48,7 @@ async function synthesizeAudio(text) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Upload to Firebase Storage and return a *Firebase alt=media* URL
+// Upload to Firebase Storage and return a Firebase alt=media URL
 async function uploadAudio(buffer, filename) {
   const file = bucket.file(filename);
 
@@ -47,22 +60,22 @@ async function uploadAudio(buffer, filename) {
     },
   });
 
-  // Public read so browsers can fetch it directly
+  // Simple public access (switch to signed URLs later if you prefer privacy)
   await file.makePublic();
 
-  const bucketName = bucket.name; // e.g. sleepingai-5abd2.firebasestorage.app
-  // This URL is the most reliable with <audio> elements
-  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodeURIComponent(
+  // bucket.name will be like "sleepingai-5abd2.appspot.com"
+  return `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(
     filename
   )}?alt=media`;
 }
 
-// --- Route handler -----------------------------------------------------------
+// ---- Route handler ---------------------------------------------------------
 export async function POST(req) {
   try {
     const { topic, numSummaries = 1, lengthMinutes = 10 } = await req.json();
-    if (!topic) {
-      return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
+
+    if (!topic || typeof topic !== 'string') {
+      return NextResponse.json({ error: 'Missing or invalid "topic"' }, { status: 400 });
     }
 
     const prompt = `
@@ -87,7 +100,12 @@ OUTPUT ONLY a JSON array like:
       return NextResponse.json({ error: 'AI returned no JSON array' }, { status: 500 });
     }
 
-    const stories = JSON.parse(match[0]);
+    let stories;
+    try {
+      stories = JSON.parse(match[0]);
+    } catch {
+      return NextResponse.json({ error: 'JSON parse failed' }, { status: 500 });
+    }
 
     const storiesWithAudio = await Promise.all(
       stories.map(async (s) => {
