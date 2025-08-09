@@ -2,8 +2,7 @@
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./components/AuthProvider";
-import { useEffect } from "react";
-import { initPostHog } from "./instrumentation-client";
+import PostHogInit from "./components/PostHogInit";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -17,13 +16,10 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    initPostHog();
-  }, []);
-
   return (
     <html lang="en">
       <body className={`${roboto.variable} font-roboto antialiased`}>
+        <PostHogInit />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
