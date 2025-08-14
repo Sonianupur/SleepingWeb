@@ -1,4 +1,4 @@
-// app/instrumentation-client.js
+
 "use client";
 
 import posthog from "posthog-js";

@@ -2,7 +2,7 @@
 
 import { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

@@ -1,4 +1,4 @@
-// app/store/page.js
+
 
 import Store from '../components/Store';
 import Link from 'next/link';
@@ -15,7 +15,7 @@ export default function StorePage() {
         padding: '48px 12px',
       }}
     >
-      {/* Go back to dashboard */}
+      {        /* Back to Dashboard Button */}
       <div style={{ width: '100%', maxWidth: 600, marginBottom: 24 }}>
         <Link href="/dashboard">
           <button

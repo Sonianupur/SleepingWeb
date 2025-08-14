@@ -2,9 +2,11 @@
 
 import { useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from '../../context/AuthContext';
 import { setDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase'; // Adjust path if needed
+import { db } from '../firebase'; 
+// ✅ PostHog KPI helpers
+import { identifyUser, trackSignup, trackActiveUser } from '../analytics';
 
 export default function SignUpPage() {
   const { signUp } = useContext(AuthContext)
@@ -40,9 +42,9 @@ export default function SignUpPage() {
     try {
       // 1. Create Auth user
       const userCredential = await signUp(formData.email, formData.password);
-      const user = userCredential.user || userCredential; // Support both return shapes
+      const user = userCredential.user || userCredential;
 
-      // 2. Create Firestore user doc with 10 credits!
+      // 2. Create Firestore user doc with 10 credits
       await setDoc(doc(db, "users", user.uid), {
         email: formData.email,
         username: formData.username,
@@ -50,10 +52,15 @@ export default function SignUpPage() {
         createdAt: Date.now()
       });
 
-      window.alert("Account created successfully!");
+      // ✅ 3. PostHog tracking
+      identifyUser(user.uid, { email: formData.email, username: formData.username });
+      trackSignup(user.uid, { method: 'email_password' });
+      trackActiveUser({ source: 'signup_flow' });
+
+      alert("Account created successfully!");
       router.push('/dashboard');
     } catch (err) {
-      window.alert("Registration failed. Please check your email & password and try again.");
+      alert("Registration failed. Please check your email & password and try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -77,15 +84,12 @@ export default function SignUpPage() {
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl">
         <h2 className="text-2xl font-medium text-gray-800 mb-8">Create account</h2>
         
-        {/* Horizontal Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Form Fields */}
+          {/* Left Column */}
           <div className="space-y-6">
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
@@ -96,11 +100,9 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Username Field */}
+            {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
               <input
                 type="text"
                 name="username"
@@ -111,11 +113,9 @@ export default function SignUpPage() {
               />
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -138,9 +138,8 @@ export default function SignUpPage() {
             </div>
           </div>
 
-          {/* Right Column - Sign Up Button and Terms */}
+          {/* Right Column */}
           <div className="flex flex-col justify-center space-y-6">
-            {/* Sign Up Button */}
             <button
               onClick={handleSignUp}
               disabled={isLoading || !acceptTerms}
@@ -156,7 +155,7 @@ export default function SignUpPage() {
               )}
             </button>
 
-            {/* Terms Checkbox */}
+            {/* Terms */}
             <div className="text-center">
               <label htmlFor="acceptTerms" className="text-sm text-gray-600 cursor-pointer flex items-center justify-center">
                 <input
@@ -170,7 +169,7 @@ export default function SignUpPage() {
               </label>
             </div>
 
-            {/* Log In Link */}
+            {/* Log In */}
             <div className="text-center mt-20">
               <span className="text-sm text-gray-600">
                 Already have an account?{' '}

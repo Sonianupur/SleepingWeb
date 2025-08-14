@@ -1,9 +1,12 @@
-// app/components/PlaybackPage.js
+
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
+import { showSurvey } from '../analytics/surveys';
+
+const SURVEY_ID = 'sry_YOUR_SURVEY_ID_HERE'; // ← paste your PostHog Survey ID
 
 export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
   const bgAudioRef = useRef(null);        // background loop
@@ -52,7 +55,8 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
     }
   };
 
-  const stopAll = () => {
+  // pass completed=true when audio/TTS finishes naturally
+  const stopAll = (completed = false) => {
     clearTimers();
     try { window.speechSynthesis.cancel(); } catch {}
     setPlaying(false);
@@ -73,6 +77,11 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
         bgAudioRef.current.pause();
         bgAudioRef.current.currentTime = 0;
       } catch {}
+    }
+
+    // ✅ Trigger PostHog survey only when playback completes
+    if (completed && SURVEY_ID) {
+      showSurvey(SURVEY_ID);
     }
   };
 
@@ -99,7 +108,8 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
       }, 250);
     };
 
-    utt.onend = () => stopAll();
+    // mark natural completion
+    utt.onend = () => stopAll(true);
 
     try {
       window.speechSynthesis.speak(utt);
@@ -120,7 +130,6 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
       // Create a *fresh* audio element for each play (avoids stale state)
       const audio = new Audio(story.audioUrl);
       audio.preload = 'auto';
-      // IMPORTANT: do not set crossOrigin unless you truly need it
 
       audio.addEventListener('canplay', () => {
         setLoading(false);
@@ -139,7 +148,8 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
         });
       });
 
-      audio.addEventListener('ended', stopAll);
+      // ✅ survey when narration ends naturally
+      audio.addEventListener('ended', () => stopAll(true));
       audio.addEventListener('error', (e) => {
         console.error('Audio element error:', e);
         setLoading(false);
@@ -160,7 +170,7 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
   return (
     <div className="w-full max-w-3xl mx-auto p-4">
       <button
-        onClick={() => { stopAll(); onNavigate('generate'); }}
+        onClick={() => { stopAll(false); onNavigate('generate'); }}
         className="mb-6 text-sm text-purple-600 hover:underline"
       >
         ← Back to Generate
@@ -213,7 +223,7 @@ export default function PlaybackPage({ stories, onNavigate, settings = {} }) {
                 </button>
 
                 <button
-                  onClick={stopAll}
+                  onClick={() => stopAll(false)}  // manual stop, no survey
                   disabled={!isPlaying && !isLoading}
                   className={`px-4 py-2 rounded-2xl font-medium transition-all duration-200 ${
                     (isPlaying || isLoading)

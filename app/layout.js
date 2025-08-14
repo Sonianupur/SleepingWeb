@@ -1,8 +1,8 @@
-// app/layout.js
 import { Roboto } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "./components/AuthProvider";
-import PostHogInit from "./components/PostHogInit";
+import { AnalyticsProvider } from "./analytics";
+import EngagementTracker from "./components/EngagementTracker";
 
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
@@ -19,7 +19,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${roboto.variable} font-roboto antialiased`}>
-        <PostHogInit />
+        <AnalyticsProvider />
+        <EngagementTracker />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

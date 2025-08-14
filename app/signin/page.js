@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthContext } from '@/context/AuthContext';
+//import { AuthContext } from '@/context/AuthContext';
+import { AuthContext } from "../../context/AuthContext";
+
+
+// ✅ PostHog helpers
+import { identifyUser, trackActiveUser } from '../analytics';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -30,62 +34,44 @@ export default function LoginPage() {
       alert('Please accept the terms and privacy policy');
       return;
     }
-    
-    // setIsLoading(true);
-    
-    // try {
-    //   await new Promise(resolve => setTimeout(resolve, 1500));
-    //   router.push('/dashboard');
-    // } catch (error) {
-    //   console.error('Login failed:', error);
-    // } finally {
-    //   setIsLoading(false);
-    // }
-    // setError("");
-    // setIsLoading(true);
-    try {
-      await login(formData.email, formData.password);
-            router.push('/dashboard');
-          } catch (err) {
-            // // Firebase error message
-            // setError(err.message);
-            window.alert("Invalid login, please check User or Password!")
-            
-        } finally {
-            setIsLoading(false);
-        }
 
     setError("");
     setIsLoading(true);
 
     try {
-      await login(formData.email, formData.password);
+      const userCredential = await login(formData.email, formData.password);
+      const user = userCredential.user || userCredential;
+
+      // ✅ PostHog tracking after login success
+      identifyUser(user.uid, { email: user.email });
+      trackActiveUser({ source: 'login_email' });
+
       router.push('/dashboard');
     } catch (err) {
       setError(err.message);
+      window.alert("Invalid login, please check User or Password!");
     } finally {
       setIsLoading(false);
     }
   };
 
-
-
-    
-
-  // const handleGoogleLogin = () => {
-  //   console.log('Google login clicked');
-  // };
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await signInWithGoogle();
+      const userCredential = await signInWithGoogle();
+      const user = userCredential.user || userCredential;
+
+      // ✅ PostHog tracking for Google login
+      identifyUser(user.uid, { email: user.email });
+      trackActiveUser({ source: 'login_google' });
+
       router.push('/dashboard');
     } catch (err) {
-      window.alert("Google sign‑in failed: " + err.message);
+      window.alert("Google sign-in failed: " + err.message);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const handleForgotPassword = () => {
     router.push('/forgot-password');
@@ -104,19 +90,16 @@ export default function LoginPage() {
         </h1>
       </div>
 
-      {/* Login Card - Smaller size */}
+      {/* Login Card */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-3xl">
         <h2 className="text-2xl font-medium text-gray-800 mb-8">Log In</h2>
         
-        {/* Horizontal Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Form Fields */}
+          {/* Left Column */}
           <div className="space-y-6">
-            {/* Email Field */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <input
                 type="email"
                 name="email"
@@ -127,11 +110,9 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password Field */}
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -163,7 +144,7 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Or Login with - Centered under forgot password with lines */}
+            {/* Or Login with */}
             <div className="text-center mt-8">
               <div className="flex items-center justify-center mb-4">
                 <div className="flex-1 border-t border-gray-300"></div>
@@ -184,9 +165,8 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right Column - Login Button and Terms */}
+          {/* Right Column */}
           <div className="flex flex-col justify-center space-y-6">
-            {/* Login Button */}
             <button
               onClick={handleLogin}
               disabled={isLoading || !acceptTerms}
@@ -202,7 +182,7 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Terms Checkbox */}
+            {/* Terms */}
             <div className="text-center">
               <label htmlFor="acceptTerms" className="text-sm text-gray-600 cursor-pointer flex items-center justify-center">
                 <input
@@ -216,7 +196,7 @@ export default function LoginPage() {
               </label>
             </div>
 
-            {/* Sign Up Link - Much lower with more spacing */}
+            {/* Sign Up */}
             <div className="text-center mt-20">
               <span className="text-sm text-gray-600">
                 Do not have an account?{' '}
@@ -234,4 +214,3 @@ export default function LoginPage() {
     </div>
   );
 }
-// }

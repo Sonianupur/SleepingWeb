@@ -1,4 +1,4 @@
-// app/dashboard/page.js
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,9 +10,16 @@ import GeneratePage from '../components/GeneratePage';
 import LibraryPage  from '../components/LibraryPage';
 import ProfilePage  from '../components/ProfilePage';
 import PlaybackPage from '../components/PlaybackPage';
+//import SettingsPage from '../components/SettingsPage';
 
 import { auth, db }        from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
+import { identifyUser, trackSignup, trackActiveUser } from '../analytics';
+//import SettingsPage from '../components/SettingsPage';
+//import SettingsPage from '../components/SettingsPage';
+
+
+
 
 export default function Dashboard() {
   // ----- Dashboard state -----

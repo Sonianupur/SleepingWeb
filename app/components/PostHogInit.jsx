@@ -1,4 +1,4 @@
-// app/components/PostHogInit.jsx
+
 'use client';
 
 import { useEffect } from 'react';

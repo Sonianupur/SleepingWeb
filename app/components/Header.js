@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function Header({ credits, showMenu, setShowMenu, onNavigate, currentView }) {
   const menuRef = useRef(null);
-  const router = useRouter(); // Add this for navigation
+  const router = useRouter(); 
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -24,7 +24,7 @@ export default function Header({ credits, showMenu, setShowMenu, onNavigate, cur
       {/* Header Controls */}
       <div className="flex justify-end items-center p-6">
         <div className="flex items-center gap-4">
-          {/* --- Credits Button (NOW CLICKABLE) --- */}
+          {/* Credits Display */}
           <button
             onClick={() => router.push('/store')}
             className="bg-white bg-opacity-90 backdrop-blur-md rounded-2xl px-5 py-2 flex items-center gap-3 shadow-lg border border-white border-opacity-30 cursor-pointer transition-all hover:scale-105"
