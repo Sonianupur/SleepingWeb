@@ -1,45 +1,36 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-import Header       from '../components/Header';
-import HomePage     from '../components/HomePage';
+import Header from '../components/Header';
+import HomePage from '../components/HomePage';
 import GeneratePage from '../components/GeneratePage';
-import LibraryPage  from '../components/LibraryPage';
-import ProfilePage  from '../components/ProfilePage';
+import LibraryPage from '../components/LibraryPage';
+import ProfilePage from '../components/ProfilePage';
 import PlaybackPage from '../components/PlaybackPage';
-//import SettingsPage from '../components/SettingsPage';
+import SettingsPage from '../components/SettingsPage';
 
-import { auth, db }        from '../firebase';
+import { auth, db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { identifyUser, trackSignup, trackActiveUser } from '../analytics';
-//import SettingsPage from '../components/SettingsPage';
-//import SettingsPage from '../components/SettingsPage';
-
-
-
 
 export default function Dashboard() {
-  // ----- Dashboard state -----
-  const [credits, setCredits]                 = useState(12);
-  const [selectedTopic, setSelectedTopic]     = useState(1);
-  const [visualRotation, setVisualRotation]   = useState(-72);
-  const [showMenu, setShowMenu]               = useState(false);
-  const [currentView, setCurrentView]         = useState('home');
-
-  // 🆕 For playback
-  const [stories, setStories]                 = useState([]);
+  const [credits, setCredits] = useState(12);
+  const [selectedTopic, setSelectedTopic] = useState(1);
+  const [visualRotation, setVisualRotation] = useState(-72);
+  const [showMenu, setShowMenu] = useState(false);
+  const [currentView, setCurrentView] = useState('home');
+  const [stories, setStories] = useState([]);
   const [playbackSettings, setPlaybackSettings] = useState({});
+  const [darkMode, setDarkMode] = useState(false);
 
   const router = useRouter();
 
-  // ----- Real-time credits listener -----
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
-    const userDoc    = doc(db, 'users', user.uid);
+    const userDoc = doc(db, 'users', user.uid);
     const unsubscribe = onSnapshot(userDoc, snap => {
       const data = snap.data();
       if (data?.credits != null) {
@@ -49,7 +40,6 @@ export default function Dashboard() {
     return () => unsubscribe();
   }, []);
 
-  // ----- Navigation handler -----
   const handleNavigate = (page, payload) => {
     if (page === 'landing') {
       router.push('/');
@@ -57,14 +47,15 @@ export default function Dashboard() {
     }
 
     if (page === 'playback') {
-      // stash both stories + settings
       setStories(payload.stories);
       setPlaybackSettings(payload.settings || {});
       setCurrentView('playback');
       return;
     }
 
-    if (['home', 'generate', 'library', 'profile'].includes(page)) {
+    if ([
+      'home', 'generate', 'library', 'profile', 'settings'
+    ].includes(page)) {
       setCurrentView(page);
       return;
     }
@@ -72,7 +63,6 @@ export default function Dashboard() {
     alert(`${page.charAt(0).toUpperCase() + page.slice(1)} page coming soon!`);
   };
 
-  // ----- Topics data -----
   const topics = [
     {
       id: 'philosophy',
@@ -106,7 +96,6 @@ export default function Dashboard() {
     }
   ];
 
-  // ----- Render logic -----
   const renderCurrentView = () => {
     switch (currentView) {
       case 'home':
@@ -119,27 +108,30 @@ export default function Dashboard() {
             setVisualRotation={setVisualRotation}
             credits={credits}
             onNavigate={handleNavigate}
+            darkMode={darkMode}
           />
         );
-
       case 'generate':
-        return <GeneratePage onNavigate={handleNavigate} />;
-
+        return (
+          <div className="w-full max-w-6xl mx-auto p-6">
+            <GeneratePage onNavigate={handleNavigate} darkMode={darkMode} />
+          </div>
+        );
       case 'library':
-        return <LibraryPage onNavigate={handleNavigate} />;
-
+        return <LibraryPage onNavigate={handleNavigate} darkMode={darkMode} />;
       case 'profile':
-        return <ProfilePage onNavigate={handleNavigate} />;
-
+        return <ProfilePage onNavigate={handleNavigate} darkMode={darkMode} />;
       case 'playback':
         return (
           <PlaybackPage
             stories={stories}
             settings={playbackSettings}
             onNavigate={handleNavigate}
+            darkMode={darkMode}
           />
         );
-
+      case 'settings':
+        return <SettingsPage onNavigate={handleNavigate} darkMode={darkMode} setDarkMode={setDarkMode} />;
       default:
         return (
           <HomePage
@@ -150,6 +142,7 @@ export default function Dashboard() {
             setVisualRotation={setVisualRotation}
             credits={credits}
             onNavigate={handleNavigate}
+            darkMode={darkMode}
           />
         );
     }
@@ -157,7 +150,7 @@ export default function Dashboard() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-300 to-teal-400 flex flex-col font-roboto"
+      className={`min-h-screen flex flex-col font-roboto ${darkMode ? 'bg-slate-900 text-white' : 'bg-gradient-to-br from-slate-900 via-purple-300 to-teal-400'}`}
       style={{ fontSize: '16px' }}
     >
       <Header
@@ -166,6 +159,8 @@ export default function Dashboard() {
         setShowMenu={setShowMenu}
         onNavigate={handleNavigate}
         currentView={currentView}
+        darkMode={darkMode}
+        showNavigation={true}
       />
       <div className="flex-1 flex flex-col items-center justify-center px-4 relative z-10">
         {renderCurrentView()}
