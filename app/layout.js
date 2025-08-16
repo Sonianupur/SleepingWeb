@@ -1,4 +1,3 @@
-// app/layout.js
 import { Roboto } from 'next/font/google';
 import './globals.css';
 import AuthProvider from './components/AuthProvider';

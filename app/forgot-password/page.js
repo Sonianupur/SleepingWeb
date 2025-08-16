@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
         </h1>
       </div>
 
-      {/* Forgot Password Card - Wider */}
+      {/* Forgot Password Card */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl relative">
         {/* Back Button */}
         <button
@@ -82,7 +82,7 @@ export default function ForgotPasswordPage() {
               Do not worry! It happens. Please enter the email associated with your account.
             </p>
 
-            {/* Email Field and Send Code Button - Same line */}
+            {/* Email Field and Send Code Button */}
             <div className="mb-8">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
