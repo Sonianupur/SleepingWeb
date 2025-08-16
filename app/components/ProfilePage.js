@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
-export default function ProfilePage({ onNavigate }) {
+export default function ProfilePage({ onNavigate, darkMode = false, setDarkMode }) {
   const [profileData, setProfileData] = useState({
     name:     '',
     email:    '',
@@ -19,7 +18,6 @@ export default function ProfilePage({ onNavigate }) {
     const fetchProfile = async () => {
       const user = auth.currentUser;
       if (!user) {
-        // Not signed in → send to landing
         onNavigate?.('landing');
         return;
       }
@@ -29,20 +27,14 @@ export default function ProfilePage({ onNavigate }) {
       if (snap.exists()) {
         setProfileData(snap.data());
       } else {
-        // No Firestore doc yet, fall back to auth info
-        setProfileData({
+        const initial = {
           name:     user.displayName || '',
           email:    user.email || '',
           mobile:   '',
           location: ''
-        });
-        // Create a fresh doc
-        await setDoc(ref, {
-          name:     user.displayName || '',
-          email:    user.email || '',
-          mobile:   '',
-          location: ''
-        });
+        };
+        setProfileData(initial);
+        await setDoc(ref, initial);
       }
       setLoading(false);
     };
@@ -55,10 +47,7 @@ export default function ProfilePage({ onNavigate }) {
 
   // 2) Handle input changes
   const handleInputChange = (field, value) => {
-    setProfileData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setProfileData(prev => ({ ...prev, [field]: value }));
   };
 
   // 3) Save back to Firestore
@@ -86,31 +75,61 @@ export default function ProfilePage({ onNavigate }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Loading profile…</p>
+        <p className={darkMode ? 'text-gray-300' : 'text-gray-500'}>Loading profile…</p>
       </div>
     );
   }
 
+  const containerCls = `rounded-2xl shadow-2xl p-8 w-full max-w-4xl mx-auto relative transition-colors duration-300 ${
+    darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-800'
+  }`;
+  const borderLine = darkMode ? 'border-gray-600' : 'border-gray-300';
+  const labelCls   = darkMode ? 'text-gray-200' : 'text-gray-700';
+  const backBtnCls = `p-2 rounded-full transition-all ${
+    darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+  }`;
+  const inputCls   = `flex-1 text-right px-0 py-1 border-0 focus:outline-none focus:ring-0 bg-transparent ${
+    darkMode ? 'text-gray-100 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'
+  }`;
+  const subtleTxt  = darkMode ? 'text-gray-400' : 'text-gray-600';
+
   return (
-    <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl mx-auto relative">
+    <div className={containerCls}>
       {/* Header */}
       <div className="flex items-center justify-center mb-6 relative">
-        <h2 className="text-2xl font-medium text-gray-800 flex items-center">
-          <svg className="w-6 h-6 mr-2 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <h2 className={`text-2xl font-medium flex items-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          <svg className="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           Profile
         </h2>
-        <button
-          onClick={() => onNavigate?.('home')}
-          className="absolute right-0 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-all"
-        >
-          <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+
+        <div className="absolute right-0 flex items-center gap-2">
+          {/* Optional Dark Mode Toggle (shown only if setDarkMode provided) */}
+          {typeof setDarkMode === 'function' && (
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                darkMode ? 'bg-purple-600' : 'bg-gray-300'
+              }`}
+              aria-label="Toggle dark mode"
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  darkMode ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          )}
+
+          <button onClick={() => onNavigate?.('home')} className={backBtnCls}>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Avatar */}
@@ -119,53 +138,59 @@ export default function ProfilePage({ onNavigate }) {
           {profileData.name?.[0] || 'U'}
         </div>
         <div>
-          <h3 className="text-xl font-semibold text-gray-800">{profileData.name}</h3>
-          <p className="text-gray-600">{profileData.email}</p>
+          <h3 className="text-xl font-semibold">{profileData.name || 'Your name'}</h3>
+          <p className={subtleTxt}>{profileData.email}</p>
         </div>
       </div>
 
       {/* Form */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         <div className="space-y-6">
-          {/** Name **/}
-          <div className="flex items-center border-b-2 border-gray-300 pb-2">
-            <label className="w-36 text-gray-700 font-medium">Name</label>
+          {/* Name */}
+          <div className={`flex items-center pb-2 border-b-2 ${borderLine}`}>
+            <label className={`w-36 font-medium ${labelCls}`}>Name</label>
             <input
               type="text"
               value={profileData.name}
               onChange={e => handleInputChange('name', e.target.value)}
-              className="flex-1 text-right px-0 py-1 border-0 focus:outline-none bg-transparent"
+              className={inputCls}
+              placeholder="Add your name"
             />
           </div>
-          {/** Email **/}
-          <div className="flex items-center border-b-2 border-gray-300 pb-2">
-            <label className="w-36 text-gray-700 font-medium">Email</label>
+
+          {/* Email */}
+          <div className={`flex items-center pb-2 border-b-2 ${borderLine}`}>
+            <label className={`w-36 font-medium ${labelCls}`}>Email</label>
             <input
               type="email"
               value={profileData.email}
               onChange={e => handleInputChange('email', e.target.value)}
-              className="flex-1 text-right px-0 py-1 border-0 focus:outline-none bg-transparent"
+              className={inputCls}
+              placeholder="Add your email"
             />
           </div>
-          {/** Mobile **/}
-          <div className="flex items-center border-b-2 border-gray-300 pb-2">
-            <label className="w-36 text-gray-700 font-medium">Mobile</label>
+
+          {/* Mobile */}
+          <div className={`flex items-center pb-2 border-b-2 ${borderLine}`}>
+            <label className={`w-36 font-medium ${labelCls}`}>Mobile</label>
             <input
               type="tel"
               value={profileData.mobile}
               placeholder="Add number"
               onChange={e => handleInputChange('mobile', e.target.value)}
-              className="flex-1 text-right px-0 py-1 border-0 focus:outline-none bg-transparent placeholder-gray-400"
+              className={inputCls}
             />
           </div>
-          {/** Location **/}
-          <div className="flex items-center border-b-2 border-gray-300 pb-2">
-            <label className="w-36 text-gray-700 font-medium">Location</label>
+
+          {/* Location */}
+          <div className={`flex items-center pb-2 border-b-2 ${borderLine}`}>
+            <label className={`w-36 font-medium ${labelCls}`}>Location</label>
             <input
               type="text"
               value={profileData.location}
               onChange={e => handleInputChange('location', e.target.value)}
-              className="flex-1 text-right px-0 py-1 border-0 focus:outline-none bg-transparent"
+              className={inputCls}
+              placeholder="City, Country"
             />
           </div>
         </div>
@@ -185,7 +210,9 @@ export default function ProfilePage({ onNavigate }) {
       <div className="absolute bottom-6 right-6">
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center text-gray-600 hover:text-red-600 transition"
+          className={`flex flex-col items-center transition ${
+            darkMode ? 'text-gray-300 hover:text-red-400' : 'text-gray-600 hover:text-red-600'
+          }`}
         >
           <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

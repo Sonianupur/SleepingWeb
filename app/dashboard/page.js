@@ -11,6 +11,9 @@ import ProfilePage from '../components/ProfilePage';
 import PlaybackPage from '../components/PlaybackPage';
 import SettingsPage from '../components/SettingsPage';
 
+// NEW: Player Controls page
+import PlayerControls from '../components/PlayerControlsPage';
+
 import { auth, db } from '../firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { identifyUser, trackSignup, trackActiveUser } from '../analytics';
@@ -21,9 +24,12 @@ export default function Dashboard() {
   const [visualRotation, setVisualRotation] = useState(-72);
   const [showMenu, setShowMenu] = useState(false);
   const [currentView, setCurrentView] = useState('home');
-  const [stories, setStories] = useState([]);
+  const [stories, setStories] = useState([]);            // for PlaybackPage
   const [playbackSettings, setPlaybackSettings] = useState({});
   const [darkMode, setDarkMode] = useState(false);
+
+  // NEW: payload for PlayerControls
+  const [playerStoryData, setPlayerStoryData] = useState(null);
 
   const router = useRouter();
 
@@ -47,53 +53,33 @@ export default function Dashboard() {
     }
 
     if (page === 'playback') {
-      setStories(payload.stories);
-      setPlaybackSettings(payload.settings || {});
+      setStories(payload?.stories || []);
+      setPlaybackSettings(payload?.settings || {});
       setCurrentView('playback');
       return;
     }
 
-    if ([
-      'home', 'generate', 'library', 'profile', 'settings'
-    ].includes(page)) {
+    // NEW: navigate to PlayerControls
+    if (page === 'player') {
+      setPlayerStoryData(payload?.storyData || null);
+      setCurrentView('player');
+      return;
+    }
+
+    if (['home', 'generate', 'library', 'profile', 'settings'].includes(page)) {
       setCurrentView(page);
       return;
     }
 
-    alert(`${page.charAt(0).toUpperCase() + page.slice(1)} page coming soon!`);
+    alert(`${page?.charAt(0).toUpperCase() + page?.slice(1)} page coming soon!`);
   };
 
   const topics = [
-    {
-      id: 'philosophy',
-      title: 'Philosophy and Dreams',
-      image: 'philosophy.jpg',
-      description: 'Adventures and Ideas: Simple Paths to Big Dreams'
-    },
-    {
-      id: 'science',
-      title: 'Science & Space',
-      image: 'science.jpg',
-      description: 'Journey through the cosmos and scientific discoveries'
-    },
-    {
-      id: 'nature',
-      title: 'Nature Escapes',
-      image: 'nature.jpg',
-      description: 'Explore the wonders of the natural world'
-    },
-    {
-      id: 'fantasy',
-      title: 'Fantasy Realms',
-      image: 'fantasy.jpg',
-      description: 'Enter magical realms and mystical adventures'
-    },
-    {
-      id: 'history',
-      title: 'Historical Echoes',
-      image: 'history.jpg',
-      description: 'Discover ancient civilizations and cultural treasures'
-    }
+    { id: 'philosophy', title: 'Philosophy and Dreams', image: 'philosophy.jpg', description: 'Adventures and Ideas: Simple Paths to Big Dreams' },
+    { id: 'science',    title: 'Science & Space',       image: 'science.jpg',    description: 'Journey through the cosmos and scientific discoveries' },
+    { id: 'nature',     title: 'Nature Escapes',        image: 'nature.jpg',     description: 'Explore the wonders of the natural world' },
+    { id: 'fantasy',    title: 'Fantasy Realms',        image: 'fantasy.jpg',    description: 'Enter magical realms and mystical adventures' },
+    { id: 'history',    title: 'Historical Echoes',     image: 'history.jpg',    description: 'Discover ancient civilizations and cultural treasures' }
   ];
 
   const renderCurrentView = () => {
@@ -132,6 +118,16 @@ export default function Dashboard() {
         );
       case 'settings':
         return <SettingsPage onNavigate={handleNavigate} darkMode={darkMode} setDarkMode={setDarkMode} />;
+      // NEW: PlayerControls route
+      case 'player':
+        return (
+          <PlayerControls
+            onNavigate={handleNavigate}
+            storyData={playerStoryData}
+            darkMode={darkMode}
+            setDarkMode={setDarkMode}
+          />
+        );
       default:
         return (
           <HomePage
@@ -150,7 +146,9 @@ export default function Dashboard() {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-roboto ${darkMode ? 'bg-slate-900 text-white' : 'bg-gradient-to-br from-slate-900 via-purple-300 to-teal-400'}`}
+      className={`min-h-screen flex flex-col font-roboto ${
+        darkMode ? 'bg-slate-900 text-white' : 'bg-gradient-to-br from-slate-900 via-purple-300 to-teal-400'
+      }`}
       style={{ fontSize: '16px' }}
     >
       <Header
