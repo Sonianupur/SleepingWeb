@@ -8,10 +8,10 @@ import HomePage from '../components/HomePage';
 import GeneratePage from '../components/GeneratePage';
 import LibraryPage from '../components/LibraryPage';
 import ProfilePage from '../components/ProfilePage';
-import PlaybackPage from '../components/PlaybackPage';
+//import PlaybackPage from '../components/PlaybackPage';
 import SettingsPage from '../components/SettingsPage';
 
-// NEW: Player Controls page
+
 import PlayerControls from '../components/PlayerControlsPage';
 
 import { auth, db } from '../firebase';

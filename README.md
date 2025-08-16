@@ -8,7 +8,7 @@ npm install
 npm install firebase
 
 npm install swiper
-npm install next-themes
+
 
 
 
