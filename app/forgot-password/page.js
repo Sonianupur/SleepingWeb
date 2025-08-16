@@ -14,30 +14,10 @@ function ForgotPasswordContent() {
   const { resetPassword } = useContext(AuthContext);
 
   const handleSendCode = async () => {
-    if (!email) {
-      alert('Please enter your email address');
-      return;
-    }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      alert('Please enter a valid email address');
-      return;
-    }
+    if (!email) return alert('Please enter your email address');
+    if (!/\S+@\S+\.\S+/.test(email)) return alert('Please enter a valid email address');
 
     setIsLoading(true);
-
-    // If you want the inline success UI instead of redirecting,
-    // uncomment the block below and remove the redirect.
-    /*
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setIsCodeSent(true);
-    } catch (e) {
-      alert('Failed to send reset code. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-    */
-
     try {
       await resetPassword(email);
       window.alert('Password reset email sent. Check your inbox.');
@@ -50,22 +30,17 @@ function ForgotPasswordContent() {
     }
   };
 
-  const handleBackToLogin = () => {
-    router.push('/signin');
-  };
+  const handleBackToLogin = () => router.push('/signin');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-300 to-teal-400 flex flex-col items-center justify-center p-4">
-      {/* Logo */}
       <div className="mb-8">
         <h1 className="text-6xl md:text-7xl font-light text-white tracking-tight drop-shadow-lg text-center">
           Sleeping<span className="text-purple-600 font-medium">AI</span>
         </h1>
       </div>
 
-      {/* Card */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl relative">
-        {/* Back Button */}
         <button
           onClick={handleBackToLogin}
           className="absolute top-6 left-6 text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -75,7 +50,6 @@ function ForgotPasswordContent() {
           </svg>
         </button>
 
-        {/* Title */}
         <h2 className="text-2xl font-medium text-gray-800 mb-4 text-center">Forgot Password?</h2>
 
         {!isCodeSent ? (
@@ -156,7 +130,6 @@ function ForgotPasswordContent() {
 }
 
 export default function ForgotPasswordPage() {
-  // Suspense wrapper is safe and prevents CSR bailout errors during prerender.
   return (
     <Suspense fallback={<div />}>
       <ForgotPasswordContent />

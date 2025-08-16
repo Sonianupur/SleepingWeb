@@ -1,4 +1,4 @@
-
+// app/not-found.js
 export default function NotFound() {
   return (
     <main className="min-h-[60vh] flex items-center justify-center p-6">

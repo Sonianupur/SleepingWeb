@@ -28,21 +28,14 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
           storageKey="sleepingai-theme"
         >
-          {/* Wrap providers that might read router/search in Suspense (safe no-op if they don't) */}
+          {/* One Suspense boundary that covers anything that might use client router hooks */}
           <Suspense fallback={null}>
             <AnalyticsProvider />
-          </Suspense>
-
-          <Suspense fallback={null}>
             <EngagementTracker />
-          </Suspense>
-
-          <AuthProvider>
-            {/* Critical: ensure ALL pages (including 404 render path) are inside a Suspense boundary */}
-            <Suspense fallback={null}>
+            <AuthProvider>
               {children}
-            </Suspense>
-          </AuthProvider>
+            </AuthProvider>
+          </Suspense>
         </ThemeProvider>
       </body>
     </html>
