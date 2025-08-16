@@ -4,6 +4,7 @@ import AuthProvider from './components/AuthProvider';
 import { AnalyticsProvider } from './analytics';
 import EngagementTracker from './components/EngagementTracker';
 import { ThemeProvider } from 'next-themes';
+import { Suspense } from 'react';
 
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -27,9 +28,21 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
           storageKey="sleepingai-theme"
         >
-          <AnalyticsProvider />
-          <EngagementTracker />
-          <AuthProvider>{children}</AuthProvider>
+          {/* Wrap providers that might read router/search in Suspense (safe no-op if they don't) */}
+          <Suspense fallback={null}>
+            <AnalyticsProvider />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <EngagementTracker />
+          </Suspense>
+
+          <AuthProvider>
+            {/* Critical: ensure ALL pages (including 404 render path) are inside a Suspense boundary */}
+            <Suspense fallback={null}>
+              {children}
+            </Suspense>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
