@@ -8,7 +8,7 @@ import HomePage from '../components/HomePage';
 import GeneratePage from '../components/GeneratePage';
 import LibraryPage from '../components/LibraryPage';
 import ProfilePage from '../components/ProfilePage';
-//import PlaybackPage from '../components/PlaybackPage';
+
 import SettingsPage from '../components/SettingsPage';
 
 
@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [visualRotation, setVisualRotation] = useState(-72);
   const [showMenu, setShowMenu] = useState(false);
   const [currentView, setCurrentView] = useState('home');
-  const [stories, setStories] = useState([]);            // for PlaybackPage
+  const [stories, setStories] = useState([]);            
   const [playbackSettings, setPlaybackSettings] = useState({});
   const [darkMode, setDarkMode] = useState(false);
 
