@@ -1,4 +1,4 @@
-// app/utils/coverImage.js
+
 export const COVER_MAP = {
   // exact title matches first (lowercase)
   'echoes in the void': 'echoes-void.jpg',
