@@ -1,51 +1,54 @@
 'use client';
 
-import { useContext, useState } from 'react';
+import { useContext, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContext } from '../../context/AuthContext';
 
-export default function ForgotPasswordPage() {
+export const dynamic = 'force-dynamic';
+
+function ForgotPasswordContent() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCodeSent, setIsCodeSent] = useState(false);
   const router = useRouter();
-  const { resetPassword } = useContext(AuthContext)
+  const { resetPassword } = useContext(AuthContext);
 
   const handleSendCode = async () => {
     if (!email) {
       alert('Please enter your email address');
       return;
     }
-    
     if (!/\S+@\S+\.\S+/.test(email)) {
       alert('Please enter a valid email address');
       return;
     }
-    
-    setIsLoading(true);
-    
-  //   try {
-  //     // Simulate API call to send reset code
-  //     await new Promise(resolve => setTimeout(resolve, 1500));
-  //     setIsCodeSent(true);
-  //   } catch (error) {
-  //     console.error('Failed to send reset code:', error);
-  //     alert('Failed to send reset code. Please try again.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
-  try {
-  await resetPassword(email);
-  window.alert("Password reset email sent. Check your inbox.");
-  router.push('/signin');
-} catch (err) {
-  window.alert("Error sending reset email. Please try again.");
-} finally {
-  setIsLoading(false);
-}
-  }
+    setIsLoading(true);
+
+    // If you want the inline success UI instead of redirecting,
+    // uncomment the block below and remove the redirect.
+    /*
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setIsCodeSent(true);
+    } catch (e) {
+      alert('Failed to send reset code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+    */
+
+    try {
+      await resetPassword(email);
+      window.alert('Password reset email sent. Check your inbox.');
+      router.push('/signin');
+    } catch (err) {
+      console.error(err);
+      window.alert('Error sending reset email. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleBackToLogin = () => {
     router.push('/signin');
@@ -60,7 +63,7 @@ export default function ForgotPasswordPage() {
         </h1>
       </div>
 
-      {/* Forgot Password Card */}
+      {/* Card */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-xl relative">
         {/* Back Button */}
         <button
@@ -77,16 +80,12 @@ export default function ForgotPasswordPage() {
 
         {!isCodeSent ? (
           <>
-            {/* Description */}
             <p className="text-sm text-gray-600 mb-8 text-center leading-relaxed">
               Do not worry! It happens. Please enter the email associated with your account.
             </p>
 
-            {/* Email Field and Send Code Button */}
             <div className="mb-8">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
               <div className="flex gap-3">
                 <input
                   type="email"
@@ -115,7 +114,6 @@ export default function ForgotPasswordPage() {
           </>
         ) : (
           <>
-            {/* Success Message */}
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,12 +122,11 @@ export default function ForgotPasswordPage() {
               </div>
               <h3 className="text-lg font-medium text-gray-800 mb-2">Check Your Email</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
-                We have sent a password reset code to <strong>{email}</strong>. 
-                Please check your inbox and follow the instructions to reset your password.
+                We have sent a password reset code to <strong>{email}</strong>. Please check your inbox and follow the
+                instructions to reset your password.
               </p>
             </div>
 
-            {/* Back to Login Button */}
             <button
               onClick={handleBackToLogin}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 px-6 rounded-lg font-medium transition-all duration-300"
@@ -137,7 +134,6 @@ export default function ForgotPasswordPage() {
               Back to Login
             </button>
 
-            {/* Resend Code Link */}
             <div className="text-center mt-4">
               <span className="text-sm text-gray-600">
                 Did not receive the code?{' '}
@@ -156,5 +152,14 @@ export default function ForgotPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  // Suspense wrapper is safe and prevents CSR bailout errors during prerender.
+  return (
+    <Suspense fallback={<div />}>
+      <ForgotPasswordContent />
+    </Suspense>
   );
 }
